@@ -5,54 +5,148 @@
   <title>Gerador de Pix Estático</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    label { display: block; margin-top: 10px; }
-    input, select, textarea { width: 100%; padding: 8px; margin-top: 4px; }
-    button { margin-top: 15px; padding: 10px 20px; cursor: pointer; }
-    .button-group button { margin-right: 10px; }
-    #qrcode { margin-top: 20px; }
-    #pixCodeGroup { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-    #pixCode { flex: 1; height: 80px; }
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f0f0f0;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #00b894;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header img {
+      width: 120px;
+      margin-bottom: 10px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #fff;
+    }
+
+    main {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px 18px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #00cfc5;
+      color: #fff;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #00b3ac;
+    }
+
+    #resultado {
+      margin-top: 30px;
+    }
+
+    #pixCodeGroup {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    #pixCode {
+      flex: 1;
+      height: 80px;
+    }
+
+    .button-group {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button-group button {
+      flex: 1 1 45%;
+    }
+
+    #qrcode {
+      margin-top: 20px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <h1>Gerador de QR Code Pix Estático</h1>
+  <header>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Logo_Pix_2020.svg/512px-Logo_Pix_2020.svg.png" alt="Pix Logo">
+    <h1>Gerador de Pix Estático</h1>
+  </header>
 
-  <label>Tipo da Chave:</label>
-  <select id="tipo">
-    <option value="email">E-mail</option>
-    <option value="telefone">Telefone</option>
-    <option value="cpf">CPF</option>
-    <option value="cnpj">CNPJ</option>
-    <option value="aleatoria">Aleatória</option>
-  </select>
+  <main>
+    <label>Tipo da Chave:</label>
+    <select id="tipo">
+      <option value="email">E-mail</option>
+      <option value="telefone">Telefone</option>
+      <option value="cpf">CPF</option>
+      <option value="cnpj">CNPJ</option>
+      <option value="aleatoria">Aleatória</option>
+    </select>
 
-  <label>Chave Pix:</label>
-  <input type="text" id="chave" />
+    <label>Chave Pix:</label>
+    <input type="text" id="chave" />
 
-  <label>Identificador (opcional):</label>
-  <input type="text" id="identificador" />
+    <label>Identificador (opcional):</label>
+    <input type="text" id="identificador" />
 
-  <label>Valor (opcional):</label>
-  <input type="text" id="valor" placeholder="Ex: 25.50" />
+    <label>Valor (opcional):</label>
+    <input type="text" id="valor" placeholder="Ex: 25.50" />
 
-  <button onclick="gerarPix()">Gerar QR Code</button>
+    <button onclick="gerarPix()">Gerar QR Code</button>
 
-  <div id="resultado" style="display: none;">
-    <label>Pix Copia e Cola:</label>
-    <div id="pixCodeGroup">
-      <textarea id="pixCode" readonly></textarea>
-      <button onclick="copiarPix()">Copiar</button>
+    <div id="resultado" style="display: none;">
+      <label>Pix Copia e Cola:</label>
+      <div id="pixCodeGroup">
+        <textarea id="pixCode" readonly></textarea>
+        <button onclick="copiarPix()">Copiar</button>
+      </div>
+
+      <div id="qrcode"></div>
+
+      <div class="button-group">
+        <button onclick="window.open('placa.html', '_blank')">Criar Placa Pix gratuita</button>
+        <button onclick="baixarQR()">Baixar QR Code Pix</button>
+        <button onclick="window.location.reload()">Criar Novo QR Code Pix</button>
+      </div>
     </div>
-
-    <div id="qrcode"></div>
-
-    <div class="button-group">
-      <button onclick="window.open('placa.html', '_blank')">Criar Placa Pix gratuita</button>
-      <button onclick="baixarQR()">Baixar QR Code Pix</button>
-      <button onclick="window.location.reload()">Criar Novo QR Code Pix</button>
-    </div>
-  </div>
+  </main>
 
   <script>
     function crc16(str) {
