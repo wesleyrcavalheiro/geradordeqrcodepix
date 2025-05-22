@@ -130,7 +130,7 @@
       <div id="qrcode"></div>
 
       <div class="button-group">
-        <button onclick="window.open('placa.html', '_blank')">Criar Placa Pix gratuita</button>
+        <button onclick="abrirPlacaPix()">Criar Placa Pix gratuita</button>
         <button onclick="baixarQR()">Baixar QR Code Pix</button>
         <button onclick="window.location.reload()">Criar Novo QR Code Pix</button>
       </div>
@@ -223,6 +223,16 @@
       } else {
         alert('QR Code ainda não gerado.');
       }
+    }
+
+    function abrirPlacaPix() {
+      const payload = document.getElementById('pixCode').value;
+      if (!payload) {
+        alert("Você precisa gerar o QR Code primeiro.");
+        return;
+      }
+      const encoded = encodeURIComponent(payload);
+      window.open(`placa.html?payload=${encoded}`, '_blank');
     }
   </script>
 </body>
