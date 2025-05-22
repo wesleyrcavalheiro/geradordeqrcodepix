@@ -73,18 +73,25 @@
         return;
       }
 
+      const nome = "RAISSA MATIOLI";
+      const cidade = "SAO PAULO";
+
       const gui = formatTLV("00", "BR.GOV.BCB.PIX");
       const chavePix = formatTLV("01", chave);
       const merchantAccountInfo = formatTLV("26", gui + chavePix);
       const txid = identificador ? formatTLV("05", identificador) : formatTLV("05", "***");
       const additionalDataField = formatTLV("62", txid);
       const valorFormatado = valor ? formatTLV("54", valor) : "";
-      const payloadSemCRC = 
+      const payloadSemCRC =
         formatTLV("00", "01") +
         formatTLV("01", "12") +
         merchantAccountInfo +
+        formatTLV("52", "0000") +
+        formatTLV("53", "986") +
         valorFormatado +
         formatTLV("58", "BR") +
+        formatTLV("59", nome.slice(0,25)) +
+        formatTLV("60", cidade.slice(0,15)) +
         additionalDataField +
         "6304";
 
