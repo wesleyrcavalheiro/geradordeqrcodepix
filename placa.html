@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Placa Pix</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .placa {
+      background: #fff;
+      border: 5px solid #00cfc5;
+      padding: 30px;
+      border-radius: 15px;
+      display: inline-block;
+      position: relative;
+    }
+
+    .placa h2 {
+      margin-top: 0;
+      color: #00b894;
+    }
+
+    .qrcode-container {
+      margin-top: 20px;
+    }
+
+    .logo {
+      width: 140px;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #00b894;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #009e87;
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div id="placa" class="placa">
+    <img src="https://i.postimg.cc/fLb84GGH/Logo-pix-powered-by-Banco-Central-Brazil-2020-svg.png" alt="Pix" class="logo">
+    <h2>Pagamento via Pix</h2>
+    <div id="qrcode" class="qrcode-container"></div>
+    <p style="margin-top: 10px;">Aponte a câmera para o QR Code</p>
+  </div>
+
+  <button class="btn" onclick="baixarPlaca()">Baixar Placa como Imagem</button>
+
+  <div class="footer">
+    Criado por Gerador de Pix Estático
+  </div>
+
+  <script>
+    function getPayloadFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('payload') || '';
+    }
+
+    function gerarQR(payload) {
+      if (!payload) {
+        alert('Nenhum código Pix encontrado.');
+        return;
+      }
+
+      const qrArea = document.getElementById('qrcode');
+      qrArea.innerHTML = '';
+      new QRCode(qrArea, {
+        text: payload,
+        width: 200,
+        height: 200
+      });
+    }
+
+    function baixarPlaca() {
+      html2canvas(document.getElementById('placa')).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'placa-pix.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    const payload = getPayloadFromURL();
+    gerarQR(payload);
+  </script>
+</body>
+</html>
