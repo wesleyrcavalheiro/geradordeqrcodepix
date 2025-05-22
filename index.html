@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Gerador de Pix Estático</title>
+  <meta charset="UTF-8" />
+  <title>Gerador de Pix Estático Válido</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     label { display: block; margin-top: 10px; }
-    input, select { width: 100%; padding: 8px; margin-top: 4px; }
+    input, select, textarea { width: 100%; padding: 8px; margin-top: 4px; }
     button { margin-top: 20px; padding: 10px 20px; }
     #qrcode { margin-top: 20px; }
-    textarea { width: 100%; height: 80px; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>Gerador de Pix Estático</h1>
+  <h1>Gerador de QR Code Pix Estático</h1>
+
   <label>Tipo da Chave:</label>
   <select id="tipo">
     <option value="email">E-mail</option>
@@ -42,6 +42,27 @@
   </div>
 
   <script>
+    function crc16(str) {
+      let crc = 0xFFFF;
+      for (let i = 0; i < str.length; i++) {
+        crc ^= str.charCodeAt(i) << 8;
+        for (let j = 0; j < 8; j++) {
+          if ((crc & 0x8000) !== 0) {
+            crc = (crc << 1) ^ 0x1021;
+          } else {
+            crc <<= 1;
+          }
+          crc &= 0xFFFF;
+        }
+      }
+      return crc.toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    function formatTLV(id, value) {
+      const length = value.length.toString().padStart(2, '0');
+      return id + length + value;
+    }
+
     function gerarPix() {
       const chave = document.getElementById('chave').value.trim();
       const identificador = document.getElementById('identificador').value.trim();
@@ -52,29 +73,30 @@
         return;
       }
 
-      let payload = '000201'; // Início do payload
-      payload += '2636'; // Merchant account info
-      payload += '0014BR.GOV.BCB.PIX';
-      payload += '01' + String(chave.length).padStart(2, '0') + chave;
+      const gui = formatTLV("00", "BR.GOV.BCB.PIX");
+      const chavePix = formatTLV("01", chave);
+      const merchantAccountInfo = formatTLV("26", gui + chavePix);
+      const txid = identificador ? formatTLV("05", identificador) : formatTLV("05", "***");
+      const additionalDataField = formatTLV("62", txid);
+      const valorFormatado = valor ? formatTLV("54", valor) : "";
+      const payloadSemCRC = 
+        formatTLV("00", "01") +
+        formatTLV("01", "12") +
+        merchantAccountInfo +
+        valorFormatado +
+        formatTLV("58", "BR") +
+        additionalDataField +
+        "6304";
 
-      if (valor) {
-        payload += '54' + String(valor.length).padStart(2, '0') + valor;
-      }
+      const crc = crc16(payloadSemCRC);
+      const payloadFinal = payloadSemCRC + crc;
 
-      payload += '5802BR';
-
-      if (identificador) {
-        payload += '050' + String(identificador.length).padStart(2, '0') + identificador;
-      }
-
-      payload += '6304'; // CRC (placeholder, não calculado)
-
-      document.getElementById('pixCode').value = payload;
+      document.getElementById('pixCode').value = payloadFinal;
 
       const qrArea = document.getElementById('qrcode');
       qrArea.innerHTML = '';
       new QRCode(qrArea, {
-        text: payload,
+        text: payloadFinal,
         width: 256,
         height: 256
       });
