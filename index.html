@@ -2,14 +2,17 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Gerador de Pix Estático Válido</title>
+  <title>Gerador de Pix Estático</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     label { display: block; margin-top: 10px; }
     input, select, textarea { width: 100%; padding: 8px; margin-top: 4px; }
-    button { margin-top: 20px; padding: 10px 20px; }
+    button { margin-top: 15px; padding: 10px 20px; cursor: pointer; }
+    .button-group button { margin-right: 10px; }
     #qrcode { margin-top: 20px; }
+    #pixCodeGroup { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    #pixCode { flex: 1; height: 80px; }
   </style>
 </head>
 <body>
@@ -35,10 +38,20 @@
 
   <button onclick="gerarPix()">Gerar QR Code</button>
 
-  <div id="resultado">
+  <div id="resultado" style="display: none;">
     <label>Pix Copia e Cola:</label>
-    <textarea id="pixCode" readonly></textarea>
+    <div id="pixCodeGroup">
+      <textarea id="pixCode" readonly></textarea>
+      <button onclick="copiarPix()">Copiar</button>
+    </div>
+
     <div id="qrcode"></div>
+
+    <div class="button-group">
+      <button onclick="window.open('placa.html', '_blank')">Criar Placa Pix gratuita</button>
+      <button onclick="baixarQR()">Baixar QR Code Pix</button>
+      <button onclick="window.location.reload()">Criar Novo QR Code Pix</button>
+    </div>
   </div>
 
   <script>
@@ -47,11 +60,7 @@
       for (let i = 0; i < str.length; i++) {
         crc ^= str.charCodeAt(i) << 8;
         for (let j = 0; j < 8; j++) {
-          if ((crc & 0x8000) !== 0) {
-            crc = (crc << 1) ^ 0x1021;
-          } else {
-            crc <<= 1;
-          }
+          crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
           crc &= 0xFFFF;
         }
       }
@@ -59,8 +68,7 @@
     }
 
     function formatTLV(id, value) {
-      const length = value.length.toString().padStart(2, '0');
-      return id + length + value;
+      return id + value.length.toString().padStart(2, '0') + value;
     }
 
     function gerarPix() {
@@ -90,8 +98,8 @@
         formatTLV("53", "986") +
         valorFormatado +
         formatTLV("58", "BR") +
-        formatTLV("59", nome.slice(0,25)) +
-        formatTLV("60", cidade.slice(0,15)) +
+        formatTLV("59", nome.slice(0, 25)) +
+        formatTLV("60", cidade.slice(0, 15)) +
         additionalDataField +
         "6304";
 
@@ -99,14 +107,39 @@
       const payloadFinal = payloadSemCRC + crc;
 
       document.getElementById('pixCode').value = payloadFinal;
+      document.getElementById('resultado').style.display = 'block';
 
       const qrArea = document.getElementById('qrcode');
       qrArea.innerHTML = '';
-      new QRCode(qrArea, {
+      const qr = new QRCode(qrArea, {
         text: payloadFinal,
         width: 256,
         height: 256
       });
+
+      setTimeout(() => {
+        const img = qrArea.querySelector("img");
+        if (img) img.id = "qrimage";
+      }, 500);
+    }
+
+    function copiarPix() {
+      const texto = document.getElementById('pixCode');
+      texto.select();
+      document.execCommand('copy');
+      alert('Código Pix copiado!');
+    }
+
+    function baixarQR() {
+      const img = document.getElementById('qrimage');
+      if (img) {
+        const link = document.createElement('a');
+        link.href = img.src;
+        link.download = 'qrcode_pix.png';
+        link.click();
+      } else {
+        alert('QR Code ainda não gerado.');
+      }
     }
   </script>
 </body>
