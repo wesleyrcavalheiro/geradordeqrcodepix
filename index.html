@@ -1,239 +1,137 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gerador de Pix Estático</title>
+  <meta charset="UTF-8">
+  <title>Placa Pix</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     body {
       font-family: "Segoe UI", sans-serif;
       background-color: #f0f0f0;
-      color: #333;
       margin: 0;
-      padding: 0;
+      padding: 20px;
+      text-align: center;
     }
 
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
+    .placa {
       background: #fff;
+      border: 5px solid #00cfc5;
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-      text-align: center;
+      border-radius: 15px;
+      display: inline-block;
+      position: relative;
+      max-width: 400px;
+    }
+
+    .placa h2 {
+      margin: 0;
+      font-size: 24px;
+      color: #00b894;
+    }
+
+    .qrcode-container {
+      margin: 20px 0;
     }
 
     .logo {
-      width: 160px;
-      margin-bottom: 20px;
+      width: 140px;
+      margin-bottom: 10px;
     }
 
-    h1 {
-      font-size: 24px;
-      color: #00b894;
-      margin-bottom: 30px;
-    }
-
-    label {
-      display: block;
-      margin: 15px 0 5px;
-      text-align: left;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-
-    button {
-      padding: 10px 18px;
+    .btn {
       margin-top: 20px;
+      padding: 10px 20px;
+      background: #00b894;
+      color: white;
       border: none;
       border-radius: 5px;
-      background-color: #00cfc5;
-      color: #fff;
       font-weight: bold;
-      font-size: 14px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
 
-    button:hover {
-      background-color: #00b3ac;
+    .btn:hover {
+      background: #009e87;
     }
 
-    #pixCodeGroup {
-      display: flex;
-      gap: 10px;
-      align-items: center;
+    .footer {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .instrucoes {
       margin-top: 10px;
+      font-size: 15px;
+      color: #222;
     }
 
-    #pixCode {
-      flex: 1;
-      height: 80px;
-    }
-
-    .button-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
-      justify-content: center;
-    }
-
-    .button-group button {
-      flex: 1 1 45%;
-    }
-
-    #qrcode {
-      margin: 20px auto;
-      text-align: center;
+    .chave {
+      font-weight: bold;
+      color: #444;
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <img src="https://i.postimg.cc/fLb84GGH/Logo-pix-powered-by-Banco-Central-Brazil-2020-svg.png" alt="Logo Pix" class="logo" />
-    <h1>Gerador de QR Code Pix</h1>
+  <div id="placa" class="placa">
+    <img src="https://i.postimg.cc/fLb84GGH/Logo-pix-powered-by-Banco-Central-Brazil-2020-svg.png" alt="Pix" class="logo">
+    <h2>PAGUE COM PIX!</h2>
+    <div id="qrcode" class="qrcode-container"></div>
+    <div class="instrucoes">Aponte a câmera para o QR Code</div>
+    <div class="instrucoes">Ou use nossa chave:</div>
+    <div class="chave" id="chavePix">carregando...</div>
+  </div>
 
-    <label>Tipo da Chave:</label>
-    <select id="tipo">
-      <option value="email">E-mail</option>
-      <option value="telefone">Telefone</option>
-      <option value="cpf">CPF</option>
-      <option value="cnpj">CNPJ</option>
-      <option value="aleatoria">Aleatória</option>
-    </select>
+  <button class="btn" onclick="baixarPlaca()">Baixar Placa como Imagem</button>
 
-    <label>Chave Pix:</label>
-    <input type="text" id="chave" />
-
-    <label>Identificador (opcional):</label>
-    <input type="text" id="identificador" />
-
-    <label>Valor (opcional):</label>
-    <input type="text" id="valor" placeholder="Ex: 25.50" />
-
-    <button onclick="gerarPix()">Gerar QR Code</button>
-
-    <div id="resultado" style="display: none;">
-      <label>Pix Copia e Cola:</label>
-      <div id="pixCodeGroup">
-        <textarea id="pixCode" readonly></textarea>
-        <button onclick="copiarPix()">Copiar</button>
-      </div>
-
-      <div id="qrcode"></div>
-
-      <div class="button-group">
-        <button onclick="abrirPlacaPix()">Criar Placa Pix gratuita</button>
-        <button onclick="baixarQR()">Baixar QR Code Pix</button>
-        <button onclick="window.location.reload()">Criar Novo QR Code Pix</button>
-      </div>
-    </div>
+  <div class="footer">
+    Criado por Gerador de Pix Estático
   </div>
 
   <script>
-    function crc16(str) {
-      let crc = 0xFFFF;
-      for (let i = 0; i < str.length; i++) {
-        crc ^= str.charCodeAt(i) << 8;
-        for (let j = 0; j < 8; j++) {
-          crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
-          crc &= 0xFFFF;
-        }
-      }
-      return crc.toString(16).toUpperCase().padStart(4, '0');
+    function getPayloadFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('payload') || '';
     }
 
-    function formatTLV(id, value) {
-      return id + value.length.toString().padStart(2, '0') + value;
+    function extrairChave(payload) {
+      const pos = payload.indexOf("BR.GOV.BCB.PIX01");
+      if (pos === -1) return "";
+      const inicio = pos + 16;
+      const tamanho = parseInt(payload.substr(inicio - 2, 2));
+      return payload.substr(inicio, tamanho);
     }
 
-    function gerarPix() {
-      const chave = document.getElementById('chave').value.trim();
-      const identificador = document.getElementById('identificador').value.trim();
-      const valor = document.getElementById('valor').value.trim();
-
-      if (!chave) {
-        alert('Informe a chave Pix.');
+    function gerarQR(payload) {
+      if (!payload) {
+        alert('Nenhum código Pix encontrado.');
         return;
       }
-
-      const nome = "RAISSA MATIOLI";
-      const cidade = "SAO PAULO";
-
-      const gui = formatTLV("00", "BR.GOV.BCB.PIX");
-      const chavePix = formatTLV("01", chave);
-      const merchantAccountInfo = formatTLV("26", gui + chavePix);
-      const txid = identificador ? formatTLV("05", identificador) : formatTLV("05", "***");
-      const additionalDataField = formatTLV("62", txid);
-      const valorFormatado = valor ? formatTLV("54", valor) : "";
-      const payloadSemCRC =
-        formatTLV("00", "01") +
-        formatTLV("01", "12") +
-        merchantAccountInfo +
-        formatTLV("52", "0000") +
-        formatTLV("53", "986") +
-        valorFormatado +
-        formatTLV("58", "BR") +
-        formatTLV("59", nome.slice(0, 25)) +
-        formatTLV("60", cidade.slice(0, 15)) +
-        additionalDataField +
-        "6304";
-
-      const crc = crc16(payloadSemCRC);
-      const payloadFinal = payloadSemCRC + crc;
-
-      document.getElementById('pixCode').value = payloadFinal;
-      document.getElementById('resultado').style.display = 'block';
 
       const qrArea = document.getElementById('qrcode');
       qrArea.innerHTML = '';
-      const qr = new QRCode(qrArea, {
-        text: payloadFinal,
-        width: 256,
-        height: 256
+      new QRCode(qrArea, {
+        text: payload,
+        width: 200,
+        height: 200
       });
 
-      setTimeout(() => {
-        const img = qrArea.querySelector("img");
-        if (img) img.id = "qrimage";
-      }, 500);
+      const chave = extrairChave(payload);
+      document.getElementById('chavePix').textContent = chave || "(chave não encontrada)";
     }
 
-    function copiarPix() {
-      const texto = document.getElementById('pixCode');
-      texto.select();
-      document.execCommand('copy');
-      alert('Código Pix copiado!');
-    }
-
-    function baixarQR() {
-      const img = document.getElementById('qrimage');
-      if (img) {
+    function baixarPlaca() {
+      html2canvas(document.getElementById('placa')).then(canvas => {
         const link = document.createElement('a');
-        link.href = img.src;
-        link.download = 'qrcode_pix.png';
+        link.download = 'placa-pix.png';
+        link.href = canvas.toDataURL();
         link.click();
-      } else {
-        alert('QR Code ainda não gerado.');
-      }
+      });
     }
 
-    function abrirPlacaPix() {
-      const payload = document.getElementById('pixCode').value;
-      if (!payload) {
-        alert("Você precisa gerar o QR Code primeiro.");
-        return;
-      }
-      const encoded = encodeURIComponent(payload);
-      window.open(`placa.html?payload=${encoded}`, '_blank');
-    }
+    const payload = getPayloadFromURL();
+    gerarQR(payload);
   </script>
 </body>
 </html>
